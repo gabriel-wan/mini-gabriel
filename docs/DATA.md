@@ -1,9 +1,9 @@
 # DATA.md — data strategy and ingestion
 
 This document describes the data strategy and the ingestion implementation as
-it actually exists. Both stages are implemented and have been validated
-end-to-end on a five-chat sample of real data. The full extraction has not been
-run yet.
+it actually exists. Extraction and analysis are implemented and validated
+end-to-end against real data; the full extraction is in progress. Dataset
+construction is designed but not yet implemented.
 
 ## Data source
 
@@ -160,6 +160,122 @@ and any error. Skipped dialogs are recorded separately with their reason.
   renamed, so an interrupted run cannot corrupt it.
 - **Truncation-tolerant reads.** A partially written final JSONL line is
   skipped rather than invalidating the file.
+
+## Dataset construction
+
+Decided, but **not yet implemented**. The measurements quoted here come from a
+partial extraction (roughly 25,000 messages across 11 chats) and should be
+re-checked against the full dataset.
+
+### What a training example is
+
+The chat history is not handed to the model as one block. It is cut into many
+examples, each shaped as:
+
+    conversation so far  ->  what I said next
+
+Every turn I authored becomes the target of one example, so all of the data is
+used. A single message is used many times over: once as a target, and again as
+context for the examples that follow it.
+
+Worked example. Given:
+
+    1. Friend:  eh you going gym later
+    2. Me:      ya
+    3. Me:      6pm
+    4. Friend:  ok see you
+    5. Me:      nice
+
+two examples are produced:
+
+    context: [1]          ->  target: "ya" + "6pm"
+    context: [1, 2, 3, 4] ->  target: "nice"
+
+### 1. Bursts are merged, with message boundaries preserved
+
+Consecutive messages from the same author separated by less than `burst_gap`
+form a single turn. They are joined with a newline so the boundaries survive
+into the target. At generation time the output is split on that delimiter and
+sent as separate messages.
+
+Evidence: 60% of my turns contain more than one message (mean 2.06, max 34),
+and 82% of same-author gaps are under 60 seconds, with p90 at 8 minutes.
+Treating each message as its own example would train the model to stop after
+one, discarding the most characteristic feature of the style.
+
+### 2. Conversations are split on a time gap
+
+A silence longer than `session_gap` begins a new conversation, so context is
+never drawn from an unrelated exchange days earlier.
+
+Evidence: only 4% of speaker transitions exceed three hours and 7% exceed one
+hour. Conversations are dense, so this boundary rarely fires and is not worth
+refining further. Reply chains (`reply_to_msg_id`) are kept in the raw data but
+are not used for segmentation yet, since explicit replies are sparse in casual
+chat.
+
+### 3. Context is capped, not discarded
+
+Each example carries the preceding `context_turns` turns, subject to
+`context_token_budget`. Capping context does not drop data: older messages have
+already served as targets in their own examples and as context for nearer ones.
+
+Evidence: the median message is 15 characters, so ten turns is roughly 120
+tokens. Context is unusually cheap here and can afford to be generous.
+
+### 4. Other participants are pseudonymised
+
+Each participant is mapped to a stable placeholder within a chat. The mapping is
+written to a local, git-ignored file so results stay debuggable.
+
+This preserves multi-speaker structure in group chats while keeping real
+identities out of the training data, which matters because models memorise and
+reproduce what they are trained on.
+
+Known limitation: this replaces the speaker label only. Names typed inside
+message text are not removed. Reliable in-text scrubbing is substantially harder
+and carries real false-positive risk, so residual names will remain in the data.
+
+### 5. Validation is held out by whole chats
+
+A small number of entire chats, spanning different registers, are reserved for
+evaluation.
+
+Splitting randomly within a chat would leak: neighbouring examples share
+overlapping context, so a held-out example would already have been seen during
+training. Held-out loss is in any case a weak proxy for style; the meaningful
+evaluation is comparing generated replies against the real ones for the same
+context.
+
+### 6. Trivial turns are downsampled
+
+Turns consisting only of very short acknowledgements are retained at
+`trivial_keep_rate` rather than in full.
+
+Evidence: 22% of my individual messages are five characters or fewer. Trained on
+all of them, the highest-probability output becomes an acknowledgement, and the
+result imitates the style faithfully while being useless to converse with.
+Downsampling rather than removing preserves the ability to be terse when
+terseness is right.
+
+Caveat: that 22% is measured over individual messages. The figure that actually
+matters is the share of whole turns that are entirely trivial, which is lower
+because turns average two messages. It should be measured before the rate is
+fixed.
+
+### Parameters
+
+Every value above is a parameter rather than a constant, so variants can be
+tried without editing code.
+
+| parameter | initial value | controls |
+|---|---|---|
+| `burst_gap` | 5 minutes | longest silence still counted as one turn |
+| `session_gap` | 3 hours | silence that starts a new conversation |
+| `context_turns` | 10 | turns of history included per example |
+| `context_token_budget` | 1024 | hard cap on context size |
+| `trivial_keep_rate` | to be measured | share of all-trivial turns retained |
+| `holdout_chats` | 3-4 | chats reserved for evaluation |
 
 ## Privacy rules
 
