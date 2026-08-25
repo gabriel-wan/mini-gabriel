@@ -1,8 +1,9 @@
 # DATA.md — data strategy and ingestion
 
 This document describes the data strategy and the ingestion implementation as
-it actually exists. Extraction and analysis are implemented; neither has been
-run against real data yet.
+it actually exists. Both stages are implemented and have been validated
+end-to-end on a five-chat sample of real data. The full extraction has not been
+run yet.
 
 ## Data source
 

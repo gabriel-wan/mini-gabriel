@@ -48,8 +48,8 @@ This is a **hypothesis to test**, not an established result. Nothing has been tr
 | Area | Status |
 |---|---|
 | Repository foundation | complete |
-| Telegram extraction | implemented, not yet run against real data |
-| Chat analysis / selection | implemented, not yet run against real data |
+| Telegram extraction | implemented and validated on a sample; full run pending |
+| Chat analysis / selection | implemented and validated on a sample |
 | Dataset construction | not started |
 | Model selection | not decided |
 | Fine-tuning approach | not decided |
