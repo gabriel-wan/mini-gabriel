@@ -50,7 +50,7 @@ This is a **hypothesis to test**, not an established result. Nothing has been tr
 | Repository foundation | complete |
 | Telegram extraction | complete — 432 chats, 113,053 messages |
 | Chat analysis / selection | complete — 58 chats qualify, 20,697 training examples |
-| Dataset construction | designed, not implemented |
+| Dataset construction | complete — 17,001 examples, 15,567 train / 1,434 holdout |
 | Model selection | not decided |
 | Fine-tuning approach | not decided |
 | Deployment | not decided |

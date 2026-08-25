@@ -115,7 +115,11 @@ data/
 │       └── n2001.jsonl       negative (group) ids are written with an 'n' prefix
 └── processed/
     ├── chat_analysis.json    full analysis report
-    └── chat_analysis.md      the same report, human-readable
+    ├── chat_analysis.md      the same report, human-readable
+    ├── train.jsonl           training examples
+    ├── holdout.jsonl         examples from the held-out chats
+    ├── pseudonym_map.json    sender id to placeholder, per chat (private)
+    └── dataset_summary.json  counts and configuration for the last build
 ```
 
 ### Raw message record
@@ -164,9 +168,9 @@ and any error. Skipped dialogs are recorded separately with their reason.
 
 ## Dataset construction
 
-Decided, but **not yet implemented**. The measurements quoted here come from the
-complete extraction: 113,053 messages across 432 chats, of which 58 qualify,
-yielding **20,697 turns authored by me** - that is, 20,697 training examples.
+Implemented in `turns.py` (segmentation), `examples.py` (example construction)
+and `build.py` (I/O), and run against the complete extraction: 113,053 messages
+across 432 chats, of which 58 qualify.
 
 ### What a training example is
 
@@ -298,6 +302,33 @@ conditioning on the chat, not deleting data.
 If a trained model turns out to sound like one specific conversation, the cap is
 a parameter that can be enabled and the dataset rebuilt in seconds. Deleting
 data preemptively, against the evidence, is the wrong order.
+
+### Built dataset
+
+The first build, at the parameter values below:
+
+| | |
+|---|---:|
+| turns I authored | 20,415 |
+| less trivial turns dropped | −1,544 |
+| less conversation openers (no context to reply to) | −1,870 |
+| **training examples** | **17,001** |
+| split | 15,567 train / 1,434 holdout, 54 / 4 chats |
+
+Three things worth noting about those numbers.
+
+The turn count is 20,415 rather than the 20,697 an earlier ad-hoc count gave.
+The difference is media: the implementation skips text-free messages instead of
+letting them end a turn, so bursts interrupted by a photo now merge into one
+turn, as intended.
+
+Turns are not examples. A turn that opens a conversation has nothing preceding
+it to respond to, so it cannot become an example; 1,870 turns are dropped for
+that reason. This means the dataset teaches the model to *reply*, not to
+*initiate*. That is the right trade for a chatbot, but it is a real omission.
+
+Downsampling worked as designed: trivial turns fall from 11% of turns to 4% of
+training examples.
 
 ### Parameters
 

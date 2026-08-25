@@ -16,7 +16,7 @@ Execution:
 - [x] Analyze candidate chats
 - [x] Inspect dataset quality
 - [x] Finalize filtering criteria
-- [ ] Implement training-example construction
+- [x] Implement training-example construction
 
 ## ML
 
