@@ -28,11 +28,10 @@ Chat interface
 
 | Component | Status |
 |---|---|
-| Data extraction (Telegram) | **implemented** (`extract.py`) — validated on a 5-chat sample; full run pending |
+| Data extraction (Telegram) | **complete** (`extract.py`) — 432 chats, 113,053 messages, no errors |
 | Raw dataset storage (`data/raw/`, local only) | **implemented** (`storage.py`) — JSONL per chat plus a manifest |
-| Chat analysis / selection | **implemented** (`selection.py`, `analyze.py`) — validated on a 5-chat sample |
-| Filtering / preprocessing into training examples | planned — not implemented yet |
-| Training-example construction | planned — not implemented yet |
+| Chat analysis / selection | **complete** (`selection.py`, `analyze.py`) — 58 of 432 chats qualify |
+| Training-example construction | designed (see DATA.md) — not implemented yet |
 | Base pre-trained LLM | planned — model not selected |
 | Parameter-efficient fine-tuning | planned — method/framework not selected |
 | Fine-tuned mini-gabriel model | planned — not implemented yet |
