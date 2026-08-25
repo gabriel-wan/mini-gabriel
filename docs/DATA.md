@@ -2,8 +2,9 @@
 
 This document describes the data strategy and the ingestion implementation as
 it actually exists. Extraction and analysis are implemented and validated
-end-to-end against real data; the full extraction is in progress. Dataset
-construction is designed but not yet implemented.
+end-to-end against real data, and the full extraction is complete: 113,053
+messages across 432 chats, of which 58 chats qualify. Dataset construction is
+designed but not yet implemented.
 
 ## Data source
 
@@ -163,9 +164,9 @@ and any error. Skipped dialogs are recorded separately with their reason.
 
 ## Dataset construction
 
-Decided, but **not yet implemented**. The measurements quoted here come from a
-partial extraction (roughly 25,000 messages across 11 chats) and should be
-re-checked against the full dataset.
+Decided, but **not yet implemented**. The measurements quoted here come from the
+complete extraction: 113,053 messages across 432 chats, of which 58 qualify,
+yielding **20,697 turns authored by me** - that is, 20,697 training examples.
 
 ### What a training example is
 
@@ -198,8 +199,8 @@ form a single turn. They are joined with a newline so the boundaries survive
 into the target. At generation time the output is split on that delimiter and
 sent as separate messages.
 
-Evidence: 60% of my turns contain more than one message (mean 2.06, max 34),
-and 82% of same-author gaps are under 60 seconds, with p90 at 8 minutes.
+Evidence: 54% of my turns contain more than one message, mean 1.93 messages per
+turn. 82% of same-author gaps are under 60 seconds, with p90 at 8 minutes.
 Treating each message as its own example would train the model to stop after
 one, discarding the most characteristic feature of the style.
 
@@ -252,16 +253,51 @@ context.
 Turns consisting only of very short acknowledgements are retained at
 `trivial_keep_rate` rather than in full.
 
-Evidence: 22% of my individual messages are five characters or fewer. Trained on
-all of them, the highest-probability output becomes an acknowledgement, and the
-result imitates the style faithfully while being useless to converse with.
-Downsampling rather than removing preserves the ability to be terse when
-terseness is right.
+Evidence: **11% of my turns are entirely trivial** - every message in them is
+five characters or fewer. Trained on all of them, the highest-probability output
+becomes an acknowledgement, and the result imitates the style faithfully while
+being useless to converse with. Downsampling rather than removing preserves the
+ability to be terse when terseness is right.
 
-Caveat: that 22% is measured over individual messages. The figure that actually
-matters is the share of whole turns that are entirely trivial, which is lower
-because turns average two messages. It should be measured before the rate is
-fixed.
+Note that the per-message figure is 22%, twice the per-turn figure. Merging
+bursts absorbs many acknowledgements into turns that also contain something
+substantive, so the per-message number materially overstates the problem. The
+per-turn figure is the one that matters, because a turn is what the model is
+asked to produce.
+
+### Rejected: capping turns per chat
+
+The dataset is concentrated: the largest chat is 18.1% of all training examples
+(3,751 turns), the top five are 45.8%, and the top ten are 60%. This looked like
+a problem worth fixing with a `max_turns_per_chat` cap, on the theory that the
+model would learn one relationship's register rather than a general style.
+
+**The evidence does not support it, so no cap is applied.** Comparing the
+largest chat against the aggregate of the other fifty:
+
+| metric | largest chat | other 50 chats |
+|---|---:|---:|
+| median turn length | 26 chars | 24 chars |
+| messages per turn | 1.88 | 1.89 |
+| trivial turns | 11.8% | 11.4% |
+| ends with punctuation | 9.2% | 9.8% |
+
+My structural style is essentially identical across conversation partners, so
+the concentrated chats are not stylistically distinct and there is nothing for a
+cap to correct. Capping at 1,500 turns would discard 3,055 real examples - 15% of
+the dataset - to address a skew that is not present.
+
+The one dimension that genuinely varies by relationship is emoji rate: 1.9% and
+2.5% in the two largest chats, against 9.7% and 15.3% in others. Capping barely
+moves this (roughly 5.2% to 5.8% overall), so it is not a fix for it either. The
+consequence to be aware of is that the model will learn a single average emoji
+rate and apply it uniformly, where I modulate it per person. That is an inherent
+limit of relationship-agnostic style imitation; addressing it would mean
+conditioning on the chat, not deleting data.
+
+If a trained model turns out to sound like one specific conversation, the cap is
+a parameter that can be enabled and the dataset rebuilt in seconds. Deleting
+data preemptively, against the evidence, is the wrong order.
 
 ### Parameters
 
@@ -274,7 +310,7 @@ tried without editing code.
 | `session_gap` | 3 hours | silence that starts a new conversation |
 | `context_turns` | 10 | turns of history included per example |
 | `context_token_budget` | 1024 | hard cap on context size |
-| `trivial_keep_rate` | to be measured | share of all-trivial turns retained |
+| `trivial_keep_rate` | 0.33 | share of all-trivial turns retained (11% of turns are trivial) |
 | `holdout_chats` | 3-4 | chats reserved for evaluation |
 
 ## Privacy rules
