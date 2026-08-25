@@ -47,8 +47,9 @@ This is a **hypothesis to test**, not an established result. Nothing has been tr
 
 | Area | Status |
 |---|---|
-| Repository foundation | in progress |
-| Telegram extraction | not started |
+| Repository foundation | complete |
+| Telegram extraction | implemented, not yet run against real data |
+| Chat analysis / selection | implemented, not yet run against real data |
 | Dataset construction | not started |
 | Model selection | not decided |
 | Fine-tuning approach | not decided |
@@ -63,7 +64,9 @@ Decisions already made:
 - **RAG / memory retrieval:** out of scope
 - **Training from scratch:** out of scope
 - **Initial data source:** Telegram
-- **Initial data window:** messages from 2026
+- **Initial data window:** the 2026 calendar year, Asia/Singapore
+- **Ingestion shape:** extraction and chat selection are separate stages; all
+  selection logic is kept free of Telethon so it is testable
 
 ## Not yet decided
 

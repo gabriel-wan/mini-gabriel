@@ -28,9 +28,10 @@ Chat interface
 
 | Component | Status |
 |---|---|
-| Data extraction (Telegram) | planned — not implemented yet |
-| Raw dataset storage (`data/raw/`, local only) | planned — not implemented yet |
-| Filtering / preprocessing | planned — not implemented yet |
+| Data extraction (Telegram) | **implemented** (`extract.py`) — not yet run against real data |
+| Raw dataset storage (`data/raw/`, local only) | **implemented** (`storage.py`) — JSONL per chat plus a manifest |
+| Chat analysis / selection | **implemented** (`selection.py`, `analyze.py`) — not yet run against real data |
+| Filtering / preprocessing into training examples | planned — not implemented yet |
 | Training-example construction | planned — not implemented yet |
 | Base pre-trained LLM | planned — model not selected |
 | Parameter-efficient fine-tuning | planned — method/framework not selected |

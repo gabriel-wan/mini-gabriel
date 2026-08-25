@@ -4,8 +4,14 @@ Concrete next steps, grouped by area. See [PROJECT.md](PROJECT.md) for context a
 
 ## Data
 
-- [ ] Configure Telegram API access
-- [ ] Implement Telethon extraction
+Tooling — implemented:
+
+- [x] Configure Telegram API access
+- [x] Implement Telethon extraction
+- [x] Implement the chat-analysis report
+
+Execution — needs a real run against the account:
+
 - [ ] Extract 2026 messages
 - [ ] Analyze candidate chats
 - [ ] Inspect dataset quality
