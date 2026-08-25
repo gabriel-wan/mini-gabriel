@@ -1,0 +1,23 @@
+# Credentials and secrets
+.env
+
+# Telegram session files
+*.session
+*.session-journal
+
+# Private data — raw and processed datasets stay local, never committed.
+# Only the .gitkeep placeholders are tracked so the directory structure survives cloning.
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
