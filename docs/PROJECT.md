@@ -51,7 +51,7 @@ This is a **hypothesis to test**, not an established result. Nothing has been tr
 | Telegram extraction | complete — 432 chats, 113,053 messages |
 | Chat analysis / selection | complete — 58 of 432 chats qualify |
 | Dataset construction | complete — 17,001 examples, 15,567 train / 1,434 holdout |
-| Model selection | not decided |
+| Model selection | Qwen, starting at 8B |
 | Fine-tuning approach | LoRA decided; framework not decided |
 | Evaluation | harness complete — style metric with a calibrated floor |
 | Deployment | not decided |
@@ -73,13 +73,14 @@ Decisions already made:
   partition (see [CLUSTER.md](CLUSTER.md))
 - **Fine-tuning method:** plain LoRA in bf16, not QLoRA - the memory budget
   does not require quantisation at 8B
+- **Base model:** Qwen, starting at 8B - the largest size that fits an A100-40
+  with plain LoRA, and a size ladder that makes comparing 4B/8B/14B cheap
 
 ## Not yet decided
 
 Do **not** assume answers to these — they are open questions:
 
-- Exact base model
-- Model size
+- Model size beyond the 8B starting point
 - Fine-tuning framework
 - Training hyperparameters
 - Inference/deployment approach

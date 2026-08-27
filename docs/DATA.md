@@ -118,6 +118,10 @@ data/
     ├── chat_analysis.md      the same report, human-readable
     ├── train.jsonl           training examples
     ├── holdout.jsonl         examples from the held-out chats
+    ├── train_messages.jsonl  the same, as chat messages for training
+    ├── holdout_messages.jsonl
+    ├── eval_prompts.jsonl    held-out conversations to generate replies for
+    ├── eval_reference.json   my style profile and the floor
     ├── pseudonym_map.json    sender id to placeholder, per chat (private)
     └── dataset_summary.json  counts and configuration for the last build
 ```
@@ -329,6 +333,26 @@ that reason. This means the dataset teaches the model to *reply*, not to
 
 Downsampling worked as designed: trivial turns fall from 11% of turns to 4% of
 training examples.
+
+### Chat-message formatting
+
+`chatformat.py` converts examples into the standard role/content structure that
+training frameworks consume, producing 14,939 train and 1,401 holdout rows.
+
+It emits messages, not a rendered chat template. Templates are model-specific
+and change between releases, so hardcoding a model's special tokens would
+silently rot; the tokenizer's `apply_chat_template` renders these correctly for
+whichever model is loaded.
+
+Other participants collapse into the `user` role and I become `assistant`.
+Consecutive turns sharing a role are merged, since chat templates expect
+alternation and several break without it. In group chats the merged user turns
+carry pseudonym prefixes so speakers stay distinguishable; one-to-one chats are
+left unprefixed.
+
+628 train examples are dropped here: 69 whose context contains only my own
+earlier messages, and 559 whose context ends on my own turn, where merging would
+train the model to predict its own context rather than the reply.
 
 ### Parameters
 
