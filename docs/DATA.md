@@ -4,7 +4,8 @@ This document describes the data strategy and the ingestion implementation as
 it actually exists. Extraction and analysis are implemented and validated
 end-to-end against real data, and the full extraction is complete: 113,053
 messages across 432 chats, of which 58 chats qualify. Dataset construction is
-designed but not yet implemented.
+implemented and has been run: 17,001 examples, formatted into 16,340 chat-message
+rows for training.
 
 ## Data source
 
