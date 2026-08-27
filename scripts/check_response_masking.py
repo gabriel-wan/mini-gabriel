@@ -42,6 +42,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--instruction-part", default="<|im_start|>user\n")
     p.add_argument("--response-part", default="<|im_start|>assistant\n")
     p.add_argument("--max-seq-length", type=int, default=1024)
+    p.add_argument("--chat-template", default="chatml",
+                   help="applied only if the tokenizer has none of its own (default: chatml)")
     p.add_argument("--show-template", action="store_true",
                    help="print the rendered conversation and exit, to read the real markers")
     return p.parse_args()
@@ -58,9 +60,12 @@ def main() -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
+    # Unsloth must be imported before trl, transformers and peft or its
+    # optimisations are not applied - it warns about this at runtime.
+    from unsloth import FastLanguageModel
+    from unsloth.chat_templates import get_chat_template
     from datasets import Dataset
     from trl import SFTConfig, SFTTrainer
-    from unsloth import FastLanguageModel
 
     print(f"=== response-masking check: {args.model} ===\n")
 
@@ -72,8 +77,15 @@ def main() -> int:
         full_finetuning=False,
     )
 
+    # Base models ship no chat template. Apply the same one training will use,
+    # so this verifies the format that actually gets trained on rather than a
+    # different one.
     if not getattr(tokenizer, "chat_template", None):
-        return fail("tokenizer has no chat template")
+        print(f"no chat template on this tokenizer; applying {args.chat_template!r}")
+        tokenizer = get_chat_template(tokenizer, chat_template=args.chat_template)
+
+    if not getattr(tokenizer, "chat_template", None):
+        return fail(f"still no chat template after applying {args.chat_template!r}")
 
     rendered = tokenizer.apply_chat_template(FIXTURE, tokenize=False)
 

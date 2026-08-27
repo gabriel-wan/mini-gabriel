@@ -56,6 +56,9 @@ def parse_args() -> argparse.Namespace:
     # check and the real run cannot silently disagree about turn boundaries.
     p.add_argument("--instruction-part", default="<|im_start|>user\n")
     p.add_argument("--response-part", default="<|im_start|>assistant\n")
+    p.add_argument("--chat-template", default="chatml",
+                   help="applied only if the tokenizer has none of its own, which is "
+                        "the usual case for a base model (default: chatml)")
     p.add_argument("--label", default=None, help="name for this run in the summary")
     return p.parse_args()
 
@@ -65,10 +68,13 @@ def main() -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-    # Imported here so --help works without a GPU or the training stack present.
+    # Unsloth must be imported before trl, transformers and peft or its
+    # optimisations are not applied - it warns about this at runtime. Imported
+    # inside main so --help still works without the training stack present.
+    from unsloth import FastLanguageModel
+    from unsloth.chat_templates import get_chat_template
     from datasets import load_dataset
     from trl import SFTConfig, SFTTrainer
-    from unsloth import FastLanguageModel
 
     label = args.label or f"r{args.rank}-lr{args.lr}-e{args.epochs}"
     args.output.mkdir(parents=True, exist_ok=True)
@@ -83,11 +89,17 @@ def main() -> int:
         full_finetuning=False,
     )
 
-    # A base model without a chat template would silently produce nonsense from
-    # apply_chat_template, so fail loudly instead.
+    # Base models generally ship no chat template, and Qwen3-8B-Base is no
+    # exception. ChatML is what Qwen's own instruct models use and its control
+    # tokens are already in this tokenizer's vocabulary, so applying it teaches
+    # the model a format it can already represent rather than inventing one.
     if not getattr(tokenizer, "chat_template", None):
-        print("error: tokenizer has no chat template; the dataset cannot be rendered.",
-              file=sys.stderr)
+        print(f"no chat template on this tokenizer; applying {args.chat_template!r}")
+        tokenizer = get_chat_template(tokenizer, chat_template=args.chat_template)
+
+    if not getattr(tokenizer, "chat_template", None):
+        print("error: still no chat template after get_chat_template; the dataset "
+              "cannot be rendered.", file=sys.stderr)
         return 1
 
     # The failure that made the reference project emit endless emoji: when pad
