@@ -76,6 +76,39 @@ QLoRA becomes the right choice at 14B+ on this card, or for 32B anywhere. The
 GPU ladder then maps onto the model ladder: A100-40 for 8B, A100-80 or H100-96
 for larger.
 
+## Storage: the blocking constraint
+
+**The home directory quota is roughly 120 MB.** Not gigabytes. `pip install
+unsloth` fails with `OSError: [Errno 122] Disk quota exceeded` partway through
+downloading a single 87 MB wheel.
+
+This is not visible to `quota -s`, which reports a different local filesystem
+(`/dev/sdd1`) showing 0K used, and not to `df -h ~`, which reports the whole
+171 TB shared filesystem. Both look reassuring and both are irrelevant. The only
+reliable signal was `du -sh ~` returning 114 MB against a failed install.
+
+A fine-tuning environment needs roughly:
+
+| | |
+|---|---:|
+| PyTorch, CUDA libraries, Unsloth | ~10 GB |
+| Qwen3.5-9B weights in bf16 | ~18 GB |
+
+What exists on the cluster:
+
+| path | size | writable by me | survives a job |
+|---|---:|---|---|
+| `~` (home) | ~120 MB quota | yes | yes |
+| `/mnt/scratch` | 56 TB free | **no** - root-owned, no user directory | yes |
+| `/mnt/scratch/stuproj` | | **no** - provisioned accounts (`ace001`...) | yes |
+| compute node `/tmp` | 3.1 TB NVMe | yes | **no** - node-local, wiped |
+
+So persistent storage must be requested from SoC support. Node-local `/tmp` on
+the GPU nodes is genuinely large and fast, and since compute nodes have internet
+the model weights can be re-downloaded there per job - but the Python
+environment has to persist somewhere shared, because Slurm assigns a different
+node each time.
+
 ## Before the first submission
 
 **Check whether compute nodes have outbound internet.** They frequently do not,
