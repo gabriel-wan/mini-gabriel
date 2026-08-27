@@ -109,15 +109,18 @@ the model weights can be re-downloaded there per job - but the Python
 environment has to persist somewhere shared, because Slurm assigns a different
 node each time.
 
-## Before the first submission
+## Environment, confirmed
 
-**Check whether compute nodes have outbound internet.** They frequently do not,
-in which case `from_pretrained` cannot reach HuggingFace and the job fails at
-startup. If so, download weights on the login node into shared storage and point
-`HF_HOME` at that path from the sbatch script.
+| | |
+|---|---|
+| compute node internet | **yes** - `curl https://huggingface.co` from a GPU node returns HTTP 200, so weights can be fetched inside a job and no pre-staging is needed |
+| environment modules | **none** - `module` is not a command; manage Python yourself |
+| Python | 3.12.3 at `/usr/bin/python3`, with `pip`; no conda or mamba |
+| login node | 4 cores, 15 GB RAM - fine for submitting jobs, never for training |
 
-Also confirm the expected environment setup (`module avail`), which is
-site-specific.
+Unsloth installs with `pip install unsloth`, which pulls a matching torch. Their
+docs suggest `uv`, but that would mean installing another tool first for no
+benefit here.
 
 ## Still open
 
