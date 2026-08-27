@@ -9,7 +9,7 @@ how these runs waste days.
 
 Departures from the notebook:
 
-* ``load_in_4bit=False``. The notebook uses QLoRA; an A100-40 holds a 9B model
+* ``load_in_4bit=False``. The notebook uses QLoRA; an A100-40 holds an 8B model
   in bf16 with room to spare, so there is no reason to accept 4-bit precision
   loss and a slower forward pass. See docs/CLUSTER.md.
 * ``max_seq_length=1024`` instead of 2048. The p99 example is 484 tokens and
@@ -33,7 +33,7 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--data", type=Path, required=True, help="train_messages.jsonl")
     p.add_argument("--output", type=Path, required=True, help="where to write the adapter")
-    p.add_argument("--model", default="unsloth/Qwen3.5-9B-Base")
+    p.add_argument("--model", default="unsloth/Qwen3-8B-Base")
 
     # The sweep knobs. See docs/EVALUATION.md for how to compare the results.
     p.add_argument("--rank", type=int, default=16, help="LoRA rank (primary knob)")
@@ -49,8 +49,13 @@ def parse_args() -> argparse.Namespace:
                    help="use QLoRA; only needed for models larger than ~13B on a 40GB card")
     p.add_argument("--response-only", action="store_true",
                    help="train only on my replies, masking the other side out of the loss. "
-                        "Off by default because the exact Unsloth import for this was not "
-                        "verified against their docs; turn it on and read the error if it fails.")
+                        "Run scripts/check_response_masking.py first; the job wrapper does "
+                        "this and only passes this flag once that check passes.")
+    # These must match what check_response_masking.py verified against the chat
+    # template. Passing them explicitly rather than relying on defaults means the
+    # check and the real run cannot silently disagree about turn boundaries.
+    p.add_argument("--instruction-part", default="<|im_start|>user\n")
+    p.add_argument("--response-part", default="<|im_start|>assistant\n")
     p.add_argument("--label", default=None, help="name for this run in the summary")
     return p.parse_args()
 
@@ -148,12 +153,19 @@ def main() -> int:
     )
 
     if args.response_only:
-        # Masks everything but my replies out of the loss, so the model is not
-        # also taught to write the other person's messages. Worth having, but
-        # the import path is unverified - hence opt-in.
+        # Masks everything but my replies out of the loss, so the other person's
+        # messages are read as context but never scored. The markers are passed
+        # explicitly and are the same ones check_response_masking.py verified
+        # against this model's chat template - relying on library defaults here
+        # would let the check and the real run disagree without either failing.
         from unsloth.chat_templates import train_on_responses_only
-        trainer = train_on_responses_only(trainer)
-        print("training on responses only")
+        trainer = train_on_responses_only(
+            trainer,
+            instruction_part=args.instruction_part,
+            response_part=args.response_part,
+        )
+        print(f"training on responses only "
+              f"(instruction={args.instruction_part!r} response={args.response_part!r})")
 
     started = time.time()
     stats = trainer.train()

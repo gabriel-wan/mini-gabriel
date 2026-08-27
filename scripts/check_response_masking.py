@@ -38,7 +38,7 @@ REPLY_MARKERS = ["GABRIELALPHA", "GABRIELBRAVO"]
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    p.add_argument("--model", default="unsloth/Qwen3.5-9B-Base")
+    p.add_argument("--model", default="unsloth/Qwen3-8B-Base")
     p.add_argument("--instruction-part", default="<|im_start|>user\n")
     p.add_argument("--response-part", default="<|im_start|>assistant\n")
     p.add_argument("--max-seq-length", type=int, default=1024)

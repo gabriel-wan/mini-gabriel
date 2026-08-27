@@ -92,7 +92,7 @@ A fine-tuning environment needs roughly:
 | | |
 |---|---:|
 | PyTorch, CUDA libraries, Unsloth | ~10 GB |
-| Qwen3.5-9B weights in bf16 | ~18 GB |
+| Qwen3-8B-Base weights in bf16 | ~16 GB |
 
 What exists on the cluster:
 

@@ -23,7 +23,7 @@
 set -euo pipefail
 
 HERE="${HOME}/mini-gabriel"
-MODEL="${MG_MODEL:-unsloth/Qwen3.5-9B-Base}"
+MODEL="${MG_MODEL:-unsloth/Qwen3-8B-Base}"
 
 WORK="/tmp/${USER}-${SLURM_JOB_ID}"
 OUT="${HERE}/runs/${SLURM_JOB_ID}"
