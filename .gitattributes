@@ -1,0 +1,7 @@
+# These files are executed on Linux (the SoC cluster), so they must keep LF
+# line endings regardless of the platform they were checked out on. Without
+# this, Git hands Windows a CRLF copy and Slurm refuses the job with
+# "Batch script contains DOS line breaks".
+*.sbatch text eol=lf
+*.sh     text eol=lf
+*.py     text eol=lf
