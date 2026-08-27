@@ -35,6 +35,12 @@ export HF_HOME="$WORK/hf"
 export PIP_CACHE_DIR="$WORK/pipcache"
 mkdir -p "$TMPDIR" "$HF_HOME"
 
+# Python block-buffers stdout when it is a file rather than a terminal, so loss
+# lines sit in memory for thousands of steps and the log looks stalled while the
+# job is running fine. Progress bars go to stderr and stay visible, which makes
+# the two streams disagree confusingly.
+export PYTHONUNBUFFERED=1
+
 echo "job   : ${SLURM_JOB_ID} on $(hostname)"
 echo "model : $MODEL"
 echo "work  : $WORK  ($(df -h /tmp | awk 'NR==2{print $4}') free)"
