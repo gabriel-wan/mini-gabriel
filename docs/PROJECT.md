@@ -40,7 +40,7 @@ This is a **hypothesis to test**, not an established result. Nothing has been tr
 4. **Dataset construction** — filter and transform raw messages into training examples
 5. **Baseline model** — pick a base model and establish baseline (un-fine-tuned) behavior
 6. **Fine-tuning** — parameter-efficient fine-tuning on the constructed dataset
-7. **Evaluation** — assess style similarity between model output and real messages
+7. **Evaluation** — assess style similarity between model output and real messages (harness built, see [EVALUATION.md](EVALUATION.md))
 8. **Chatbot interface** — a way to converse with the fine-tuned model
 
 ## Current status
@@ -53,6 +53,7 @@ This is a **hypothesis to test**, not an established result. Nothing has been tr
 | Dataset construction | complete — 17,001 examples, 15,567 train / 1,434 holdout |
 | Model selection | not decided |
 | Fine-tuning approach | LoRA decided; framework not decided |
+| Evaluation | harness complete — style metric with a calibrated floor |
 | Deployment | not decided |
 | Training hardware | decided — A100-40 on the NUS SoC cluster |
 
@@ -88,5 +89,7 @@ Do **not** assume answers to these — they are open questions:
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — intended high-level architecture
 - [DATA.md](DATA.md) — data strategy, selection criteria, privacy rules
+- [EVALUATION.md](EVALUATION.md) — how style similarity is judged
+- [CLUSTER.md](CLUSTER.md) — training hardware and its decisions
 - [EXPERIMENTS.md](EXPERIMENTS.md) — ML experiment log
 - [TODO.md](TODO.md) — concrete roadmap

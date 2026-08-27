@@ -20,11 +20,17 @@ Execution:
 
 ## ML
 
+Tooling — implemented:
+
+- [x] Implement the style-similarity evaluation
+- [x] Select fine-tuning method (LoRA, see CLUSTER.md)
+
+Execution:
+
 - [ ] Select baseline model
 - [ ] Establish baseline prompting/inference
-- [ ] Select fine-tuning method
 - [ ] Run initial fine-tuning experiment
-- [ ] Evaluate style similarity
+- [ ] Evaluate style similarity against the baseline
 - [ ] Iterate
 
 ## Application
