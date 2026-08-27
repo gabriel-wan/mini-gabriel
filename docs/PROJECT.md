@@ -49,11 +49,12 @@ This is a **hypothesis to test**, not an established result. Nothing has been tr
 |---|---|
 | Repository foundation | complete |
 | Telegram extraction | complete — 432 chats, 113,053 messages |
-| Chat analysis / selection | complete — 58 chats qualify, 20,697 training examples |
+| Chat analysis / selection | complete — 58 of 432 chats qualify |
 | Dataset construction | complete — 17,001 examples, 15,567 train / 1,434 holdout |
 | Model selection | not decided |
-| Fine-tuning approach | not decided |
+| Fine-tuning approach | LoRA decided; framework not decided |
 | Deployment | not decided |
+| Training hardware | decided — A100-40 on the NUS SoC cluster |
 
 ## Decisions
 
@@ -67,6 +68,10 @@ Decisions already made:
 - **Initial data window:** the 2026 calendar year, Asia/Singapore
 - **Ingestion shape:** extraction and chat selection are separate stages; all
   selection logic is kept free of Telethon so it is testable
+- **Training hardware:** NUS SoC Compute Cluster, A100-40 on the `gpu`
+  partition (see [CLUSTER.md](CLUSTER.md))
+- **Fine-tuning method:** plain LoRA in bf16, not QLoRA - the memory budget
+  does not require quantisation at 8B
 
 ## Not yet decided
 
@@ -75,9 +80,7 @@ Do **not** assume answers to these — they are open questions:
 - Exact base model
 - Model size
 - Fine-tuning framework
-- LoRA vs QLoRA (or another parameter-efficient method)
 - Training hyperparameters
-- GPU/hardware
 - Inference/deployment approach
 - Chatbot interface
 
