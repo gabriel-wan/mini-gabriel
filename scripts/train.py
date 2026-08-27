@@ -160,7 +160,10 @@ def main() -> int:
             seed=args.seed,
             output_dir=str(args.output / "checkpoints"),
             report_to="none",
-            padding_free=False,
+            # padding_free is deliberately not set. The notebook pins it False,
+            # but Unsloth auto-enables it, and with a mean sequence of 104 tokens
+            # against max_seq_length=1024 most of the compute would otherwise go
+            # into padding. Leaving it unset lets that optimisation apply.
         ),
     )
 
