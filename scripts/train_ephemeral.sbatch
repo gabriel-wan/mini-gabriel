@@ -76,9 +76,13 @@ fi
 echo "--- training ---"
 # Run every configuration inside this one job: the environment is already built,
 # so additional runs cost only their own training time.
+# Checkpoints go to node-local scratch, not home. A 2-epoch run writes roughly
+# 765 MB of them and they are only useful for resuming a run this job will never
+# resume. Only the final adapter is copied back.
 python "${HERE}/train.py" \
     --data "${HERE}/train_messages.jsonl" \
     --output "$OUT" \
+    --checkpoint-dir "$WORK/checkpoints" \
     --model "$MODEL" \
     $RESPONSE_ONLY \
     "$@"

@@ -33,6 +33,11 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--data", type=Path, required=True, help="train_messages.jsonl")
     p.add_argument("--output", type=Path, required=True, help="where to write the adapter")
+    p.add_argument("--checkpoint-dir", type=Path, default=None,
+                   help="where mid-training checkpoints go. These are large - roughly "
+                        "765 MB for a 2-epoch run - and only useful for resuming, so on "
+                        "a cluster they belong on node-local scratch rather than in a "
+                        "quota'd home directory. Defaults to <output>/checkpoints.")
     p.add_argument("--model", default="unsloth/Qwen3-8B-Base")
 
     # The sweep knobs. See docs/EVALUATION.md for how to compare the results.
@@ -158,7 +163,7 @@ def main() -> int:
             weight_decay=0.001,
             lr_scheduler_type="linear",
             seed=args.seed,
-            output_dir=str(args.output / "checkpoints"),
+            output_dir=str(args.checkpoint_dir or args.output / "checkpoints"),
             report_to="none",
             # padding_free is deliberately not set. The notebook pins it False,
             # but Unsloth auto-enables it, and with a mean sequence of 104 tokens
