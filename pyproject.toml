@@ -17,6 +17,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest"]
+# Only needed to run the Telegram bot locally; not needed for the data
+# pipeline, the evaluation, or anything that runs on the cluster.
+bot = ["python-telegram-bot>=21", "aiohttp>=3.9"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
