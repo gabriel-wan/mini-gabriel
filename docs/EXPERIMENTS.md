@@ -17,6 +17,10 @@ for what it measures and why the floor matters.
 | 762734 | Qwen3-8B-Base + LoRA | 16 | 2 | **0.0637** | 2.7x |
 | — | Qwen3-8B-Base, no fine-tuning | — | — | 0.3639 | 15.4x |
 
+Run 762734 is listed at its generation default of temperature 0.8. Sampling
+temperature was swept in 002 and moves this by less than 0.007 in either
+direction; 0.5 is the adopted default.
+
 ---
 
 ## 001 — First fine-tune, and the baseline it is measured against
@@ -95,6 +99,66 @@ required.
 **Next step:** Lower `trivial_keep_rate` from 0.33 toward 0.15 and re-measure -
 a direct, testable fix for the largest remaining gap. Then sweep rank and
 epochs now that a ranking metric exists.
+
+---
+
+## 002 — Inference temperature sweep
+
+**Date:** 2026-08-31
+
+**Objective:** Test whether sampling temperature explains replies that read well
+in some conversations and badly in others. Temperature is an inference-time
+setting, so this costs one generation job and no retraining - worth exhausting
+before touching the training data.
+
+**Model:** Run 762734's adapter, unchanged. No weights were modified.
+
+**Method:** `scripts/sweep_temperature.sbatch` generates all temperatures in one
+job. Building the environment and loading a 16 GB model costs far more than the
+generating does, so one job per temperature would have been mostly setup. Seed
+pinned at 3407 and `top_p` at 0.9 across every run, so temperature is the only
+thing varying.
+
+**Hardware:** One A100-40. 4.1 minutes per temperature, 1,434 replies each.
+
+**Result:**
+
+| temperature | style distance | ratio to floor |
+|---:|---:|---|
+| 0.4 | **0.0570** | 2.4x |
+| 0.5 | 0.0582 | 2.5x |
+| 0.6 | 0.0624 | 2.6x |
+| 0.8 | 0.0637 | 2.7x |
+
+**Observations:**
+
+Style distance improves monotonically as temperature falls, but the whole spread
+is 0.0067 - against a floor of 0.0237 and an untrained baseline of 0.3639. The
+metric cannot separate these four runs, and reading the ranking as a trend would
+be over-reading it.
+
+The per-metric columns show why it is a wash rather than a trend. Temperature
+pulls different habits in opposite directions. At 0.4 the model is closer on
+Singlish (0.0007 off), lowercase starts, burst structure and length; at 0.8 it
+is closer on questions (0.112 against my 0.138, versus 0.081 at 0.4), emoji and
+terminal punctuation. Questions and emoji live in the tail of the distribution,
+and low temperature stops reaching for them. Which end wins depends on how the
+metrics are weighted.
+
+The finding that matters is what does *not* move. `trivial_rate` is 0.1353,
+0.1339, 0.1353, 0.1332 across the four runs - flat, against my 0.042. So is
+`mean_chars`, at roughly 33 against my 43.9. Those two are most of the remaining
+distance, and sampling does not touch either. They come from the training data
+mix, which confirms from a second direction that `trivial_keep_rate` is the
+lever and temperature is not.
+
+**Decision:** 0.5 adopted as the default for `scripts/telegram_bot.py`, chosen
+by reading the replies rather than by the table. The 0.0012 of style distance it
+concedes to 0.4 is well inside the noise this experiment just established.
+
+**Next step:** Unchanged by this result - lower `trivial_keep_rate` from 0.33
+toward 0.15, rebuild, and retrain. This experiment rules out a cheaper fix
+rather than providing one.
 
 ---
 
