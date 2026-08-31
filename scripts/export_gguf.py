@@ -81,11 +81,22 @@ def main() -> int:
               file=sys.stderr)
         return 1
 
-    print(f"\nwrote GGUF to {args.output}")
-    for path in sorted(args.output.glob("*.gguf")):
+    # Unsloth writes the GGUF to a sibling directory with "_gguf" appended and
+    # leaves the intermediate merged model in the directory that was asked for.
+    # Reporting the requested path sends you to 16 GB of safetensors instead of
+    # the 5 GB file you actually want.
+    gguf_dir = args.output.with_name(args.output.name + "_gguf")
+    found = sorted(gguf_dir.glob("*.gguf")) or sorted(args.output.glob("*.gguf"))
+
+    if not found:
+        print(f"\nno .gguf found under {gguf_dir} or {args.output}", file=sys.stderr)
+        return 1
+
+    print(f"\nwrote GGUF to {found[0].parent}")
+    for path in found:
         print(f"  {path.name}  {path.stat().st_size / 1e9:.1f} GB")
-    print("\nCopy it to your laptop and load it with Ollama:")
-    print("  ollama create mini-gabriel -f Modelfile")
+    print("\nCopy that file - not the .safetensors shards - to your laptop:")
+    print(f"  scp xlogin:{found[0]} .")
     return 0
 
 
