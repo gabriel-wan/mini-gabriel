@@ -25,3 +25,6 @@ venv/
 # Generated replies. The model reproduces real names and specifics from the
 # conversations it learned from, so its output is as private as the input.
 replies/
+
+# Model weights. Multi-gigabyte, and rebuildable from the adapter.
+*.gguf
